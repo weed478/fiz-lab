@@ -3,16 +3,16 @@ module young
 import Pkg
 using Plots
 using DataFrames
+using GLM
 using Unitful
-import Unitful: cm, mm, kg, N
+using Measurements
+import Unitful: mm, cm, m, kg, N, P, GP
 import PhysicalConstants.CODATA2018: g_n as g
 
 struct Rod
     material
     l
-    ul
     d
-    ud
 end
 
 struct ExperimentData
@@ -45,7 +45,7 @@ function computedata(df::DataFrame)
 
     insertcols!(df, "x↑" => xup, "x↓" => xdown)
 
-    # compute average deformation
+    # compute average deformation (/2)
 
     transform!(df,
         ["x↑", "x↓"] => ((xu, xd)->(xu+xd)/4) => :Δl
@@ -54,27 +54,92 @@ function computedata(df::DataFrame)
     df
 end
 
+function linearregression(df::DataFrame, skip::Integer)
+    # convert to SI floats
+
+    df = select(df,
+        :F => (x->ustrip.(N, x)) => :F,
+        :Δl => (x->ustrip.(m, x)) => :Δl
+    )
+
+    # linear regression
+
+    olm = lm(@formula(Δl ~ F), df[1+skip:end, :])
+    a = coef(olm)[2] ± stderror(olm)[2]
+    b = coef(olm)[1] ± stderror(olm)[1]
+
+    (a)u"m/N", (b)u"m"
+end
+
+function getyoung(exp::ExperimentData)
+    l = exp.rod.l
+    d = exp.rod.d
+    a, _ = linearregression(exp.df, 2)
+
+    # convert to SI floats
+    l = ustrip(u"m", l)
+    d = ustrip(u"m", d)
+    a = ustrip(u"m/N", a)
+
+    # result is in pascals, convert to GP
+    uconvert(GP, (4l / (pi * d^2 * a))P)
+end
+
+function generateoutputs(exps::Vector{ExperimentData})
+    rm("output", recursive=true, force=true)
+    mkpath("output")
+
+    for exp in exps
+        println("E($(exp.rod.material)) = $(getyoung(exp))")
+
+        a, b = linearregression(exp.df, 2)
+        a = ustrip(mm/N, a) |> Measurements.value
+        b = ustrip(mm, b) |> Measurements.value
+
+        X = ustrip.(N, exp.df.F)
+        Y = ustrip.(mm, exp.df.Δl)
+
+        scatter(
+            X,
+            Y,
+            color=:blue,
+            xlabel="F [N]",
+            ylabel="Δl [mm]",
+            legend=false,
+            title=exp.rod.material,
+            xlims=(0, 1.2maximum(X)),
+            ylims=(0, 1.2maximum(Y)),
+            size=(400, 500),
+        )
+
+        plot!(
+            (F -> a*F + b),
+            color=:red,
+        )
+
+        for ext in ["png", "svg"]
+            savefig("output/$(exp.rod.material)-Fvdl.$ext")
+        end
+    end
+end
+
 function main()
     steelrod = Rod(
-        "steel", # material
-        106.5cm, # length
-        1mm,     # u(l)
-        0.81mm,  # diameter
-        0.01mm   # u(d)
+        "steel",
+        106.5cm ± 1mm,   # length
+        0.81mm ± 0.01mm, # diameter
     )
 
     brassrod = Rod(
-        "brass", # material
-        107cm,   # length
-        1mm,     # u(l)
-        1.21mm,  # diameter
-        0.01mm   # u(d)
+        "brass",
+        107cm ± 1mm,     # length
+        1.21mm ± 0.01mm, # diameter
     )
 
     exp1 = ExperimentData(
         steelrod,
         DataFrame(
-            [
+            [ # TODO shift second col up, add ±
                 1kg 1.00mm 1.00mm
                 2kg 0.50mm 0.50mm
                 3kg 0.38mm 0.37mm
@@ -105,25 +170,15 @@ function main()
         ) |> computedata
     )
 
-    plts = map([exp1, exp2]) do exp
-        plot(
-            exp.df.F .|> ustrip,
-            exp.df.Δl .|> ustrip,
-            xlabel="F [N]",
-            ylabel="Δl [mm]",
-            legend=false,
-            title=exp.rod.material,
-        )
-    end
+    generateoutputs([exp1, exp2])
 
-    println(typeof(plts))
-
-    plot(plts...)
+    nothing
 end
 
 function prepareenv()
     Pkg.add([
         "DataFrames",
+        "GLM",
         "Measurements",
         "PhysicalConstants",    
         "Plots",
