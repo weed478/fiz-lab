@@ -55,11 +55,11 @@ function computedata(df::DataFrame)
 end
 
 function linearregression(df::DataFrame, skip::Integer)
-    # convert to SI floats
+    # convert to SI floats, remove uncertainty
 
     df = select(df,
-        :F => (x->ustrip.(N, x)) => :F,
-        :Δl => (x->ustrip.(m, x)) => :Δl
+        :F => (x->Measurements.value.(ustrip.(N, x))) => :F,
+        :Δl => (x->Measurements.value.(ustrip.(m, x))) => :Δl
     )
 
     # linear regression
@@ -96,8 +96,8 @@ function generateoutputs(exps::Vector{ExperimentData})
         a = ustrip(mm/N, a) |> Measurements.value
         b = ustrip(mm, b) |> Measurements.value
 
-        X = ustrip.(N, exp.df.F)
-        Y = ustrip.(mm, exp.df.Δl)
+        X = Measurements.value.(ustrip.(N, exp.df.F))
+        Y = Measurements.value.(ustrip.(mm, exp.df.Δl))
 
         scatter(
             X,
@@ -123,6 +123,14 @@ function generateoutputs(exps::Vector{ExperimentData})
     end
 end
 
+function adduncert(M::Matrix, us::Vector)
+    M′ = similar(M, Any)
+    for col in 1:size(M)[2]
+        M′[:, col] .= M[:, col] .± us[col]
+    end
+    M′
+end
+
 function main()
     steelrod = Rod(
         "steel",
@@ -139,18 +147,21 @@ function main()
     exp1 = ExperimentData(
         steelrod,
         DataFrame(
-            [ # TODO shift second col up, add ±
-                1kg 1.00mm 1.00mm
-                2kg 0.50mm 0.50mm
-                3kg 0.38mm 0.37mm
-                4kg 0.30mm 0.30mm
-                5kg 0.28mm 0.30mm
-                6kg 0.29mm 0.28mm
-                7kg 0.24mm 0.28mm
-                8kg 0.26mm 0.23mm
-                9kg 0.24mm 0.28mm
-               10kg 0.23mm 0.24mm
-            ],
+            adduncert(
+                [
+                    1kg 1.00mm 1.00mm
+                    2kg 0.50mm 0.50mm
+                    3kg 0.38mm 0.37mm
+                    4kg 0.30mm 0.30mm
+                    5kg 0.28mm 0.30mm
+                    6kg 0.29mm 0.28mm
+                    7kg 0.24mm 0.28mm
+                    8kg 0.26mm 0.23mm
+                    9kg 0.24mm 0.28mm
+                   10kg 0.23mm 0.24mm
+                ],
+                [0kg, 0.01mm, 0.01mm]
+            ),
             ["m", "Δx↑", "Δx↓"]
         ) |> computedata
     )
@@ -158,14 +169,17 @@ function main()
     exp2 = ExperimentData(
         brassrod,
         DataFrame(
-            [
-                1kg 0.72mm 0.75mm
-                2kg 0.35mm 0.41mm
-                3kg 0.32mm 0.31mm
-                4kg 0.25mm 0.25mm
-                5kg 0.25mm 0.25mm
-                6kg 0.24mm 0.23mm
-            ],
+            adduncert(
+                [
+                    1kg 0.72mm 0.75mm
+                    2kg 0.35mm 0.41mm
+                    3kg 0.32mm 0.31mm
+                    4kg 0.25mm 0.25mm
+                    5kg 0.25mm 0.25mm
+                    6kg 0.24mm 0.23mm
+                ],
+                [0kg, 0.01mm, 0.01mm]
+            ),
             ["m", "Δx↑", "Δx↓"]
         ) |> computedata
     )
