@@ -85,6 +85,34 @@ function getyoung(exp::ExperimentData)
     uconvert(GP, (4l / (pi * d^2 * a))P)
 end
 
+function getframehookcoef(exp::ExperimentData, Eᵣ)
+    l = exp.rod.l
+    d = exp.rod.d
+    S = pi * d^2 / 4
+
+    l = ustrip(m, l)
+    S = ustrip(m^2, S)
+    Eᵣ = ustrip(P, Eᵣ)
+
+    a, _ = linearregression(exp.df, 2)
+    λ = a - (l/(Eᵣ*S))m/N
+    println("λₖ($(exp.rod.material)) = $λ")
+    λ
+end
+
+function getcorrectedyoung(expᵣ::ExperimentData, Eᵣ, exp::ExperimentData)
+    λₖ = getframehookcoef(expᵣ, Eᵣ)
+
+    l = exp.rod.l
+    d = exp.rod.d
+    S = pi * d^2 / 4
+    a, _ = linearregression(exp.df, 2)
+
+    E = l / (S * (a - λₖ))
+
+    uconvert(GP, ustrip(N/m^2, E)P)
+end
+
 function generateoutputs(exps::Vector{ExperimentData})
     rm("output", recursive=true, force=true)
     mkpath("output")
@@ -185,6 +213,9 @@ function main()
     )
 
     generateoutputs([exp1, exp2])
+
+    println("E_corrected(steel)) = $(getcorrectedyoung(exp2, 100GP, exp1))")
+    println("E_corrected(brass)) = $(getcorrectedyoung(exp1, 215GP, exp2))")
 
     nothing
 end
