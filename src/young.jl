@@ -27,24 +27,6 @@ function computedata(df::DataFrame)
         :F => map(m->uconvert(N,m*g), df[!, :m])
     )
 
-    # compute absolute deformation (up and down)
-
-    xdown = [df[1, "Δx↓"]]
-    
-    for Δx in df[2:end, "Δx↓"]
-        push!(xdown, last(xdown) + Δx)
-    end
-
-    xup = [last(xdown)]
-
-    for Δx in df[end:-1:begin+1, "Δx↑"]
-        push!(xup, last(xup) - Δx)
-    end
-
-    reverse!(xup)
-
-    insertcols!(df, "x↑" => xup, "x↓" => xdown)
-
     # compute average deformation (/2)
 
     transform!(df,
@@ -181,20 +163,20 @@ function main()
         DataFrame(
             adduncert(
                 [
-                    1kg 1.00mm 1.00mm
-                    2kg 0.50mm 0.50mm
-                    3kg 0.38mm 0.37mm
-                    4kg 0.30mm 0.30mm
-                    5kg 0.28mm 0.30mm
-                    6kg 0.29mm 0.28mm
-                    7kg 0.24mm 0.28mm
-                    8kg 0.26mm 0.23mm
-                    9kg 0.24mm 0.28mm
-                   10kg 0.23mm 0.24mm
+                    1kg 1.06mm 1.00mm
+                    2kg 1.56mm 1.50mm
+                    3kg 1.94mm 1.87mm
+                    4kg 2.24mm 2.17mm
+                    5kg 2.52mm 2.47mm
+                    6kg 2.81mm 2.75mm
+                    7kg 3.05mm 3.03mm
+                    8kg 3.31mm 3.26mm
+                    9kg 3.55mm 3.54mm
+                   10kg 3.78mm 3.78mm
                 ],
                 [0kg, 0.01mm, 0.01mm]
             ),
-            ["m", "Δx↑", "Δx↓"]
+            ["m", "x↑", "x↓"]
         ) |> computedata
     )
 
@@ -203,16 +185,16 @@ function main()
         DataFrame(
             adduncert(
                 [
-                    1kg 0.72mm 0.75mm
-                    2kg 0.35mm 0.41mm
-                    3kg 0.32mm 0.31mm
-                    4kg 0.25mm 0.25mm
-                    5kg 0.25mm 0.25mm
-                    6kg 0.24mm 0.23mm
+                    1kg 0.79mm 0.75mm
+                    2kg 1.14mm 1.16mm
+                    3kg 1.46mm 1.47mm
+                    4kg 1.71mm 1.72mm
+                    5kg 1.96mm 1.97mm
+                    6kg 2.20mm 2.20mm
                 ],
                 [0kg, 0.01mm, 0.01mm]
             ),
-            ["m", "Δx↑", "Δx↓"]
+            ["m", "x↑", "x↓"]
         ) |> computedata
     )
 
