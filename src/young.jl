@@ -1,3 +1,16 @@
+begin
+    println("Adding packages, please wait...")
+    import Pkg
+    Pkg.add([
+        "DataFrames",
+        "GLM",
+        "Measurements",
+        "PhysicalConstants",    
+        "Plots",
+        "Unitful",
+    ])
+end
+
 module young
 
 import Pkg
@@ -206,15 +219,6 @@ function main()
     nothing
 end
 
-function prepareenv()
-    Pkg.add([
-        "DataFrames",
-        "GLM",
-        "Measurements",
-        "PhysicalConstants",    
-        "Plots",
-        "Unitful",
-    ])
-end
-
 end # module
+
+young.main()

@@ -1,6 +1,6 @@
-name = "young"
+name = "fizlab"
 uuid = "f2d91064-d577-42f0-b547-60da904a3d07"
-authors = ["Carbon225 <carbon225@protonmail.com>"]
+authors = ["Jakub Karbowski <carbon@student.agh.edu.pl>"]
 version = "0.1.0"
 
 [deps]
