@@ -103,6 +103,10 @@ end
 function getcorrectedyoung(expᵣ::ExperimentData, Eᵣ, exp::ExperimentData)
     λₖ = getframehookcoef(expᵣ, Eᵣ)
 
+    mass, F = exp.df[end, [:m, :F]]
+    Δl = uconvert(mm, λₖ * F)
+    println("Δlₖ($(exp.rod.material), $(Measurements.value(mass))) = $Δl")
+
     l = exp.rod.l
     d = exp.rod.d
     S = pi * d^2 / 4
