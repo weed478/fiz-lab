@@ -6,10 +6,17 @@ using Interpolations
 
 function fillmissing!(M)
     for xi=1:size(M)[1]
-        val = mean(filter(x->!isnan(x), M[xi, :]))
+        rys = 1:size(M)[2]
+        rzs = M[xi,:]
+        
+        rys = [y for (y,z)=zip(rys, rzs) if !isnan(z)]
+        rzs = [z for z=rzs if !isnan(z)]
+        
+        itp = LinearInterpolation((rys,), rzs, extrapolation_bc=Flat())
+        
         for yi=1:size(M)[2]
             if isnan(M[xi,yi])
-                M[xi,yi] = val
+                M[xi,yi] = itp(yi)
             end
         end
     end
