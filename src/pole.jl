@@ -3,6 +3,7 @@ module pole
 using PlotlyJS
 using Statistics
 using Interpolations
+using DataFrames
 
 function fillmissing!(M)
     for xi=1:size(M)[1]
@@ -23,7 +24,7 @@ function fillmissing!(M)
 end
 
 function main()
-    data1 = [
+    M = [
         NaN  NaN  1.04 NaN  NaN  0.86 NaN  NaN  0.75 NaN  NaN  0.94 NaN  NaN  0.95 NaN 
         NaN  NaN  1.79 NaN  NaN  1.71 NaN  NaN  1.69 NaN  NaN  1.72 NaN  NaN  1.74 NaN
         2.84 2.73 2.58 2.49 2.36 2.44 2.56 2.42 2.50 2.56 2.52 2.47 2.52 2.53 2.61 2.78
@@ -37,11 +38,11 @@ function main()
         NaN  NaN  8.11 NaN  NaN  8.62 NaN  NaN  8.90 NaN  NaN  8.93 NaN  NaN  8.65 NaN
     ]
 
-    fillmissing!(data1)
+    fillmissing!(M)
 
-    xs = 1:size(data1)[1]
-    ys = 1:size(data1)[2]
-    zs = data1
+    xs = 1:size(M)[1]
+    ys = 1:size(M)[2]
+    zs = M
 
     itp = LinearInterpolation((xs, ys), zs)
     xd = range(minimum(xs), maximum(xs), length=100)
@@ -54,6 +55,36 @@ function main()
         z=zd,
     ) |> plot |> display
 
+    dfV = DataFrame(:x => [], :V => [])
+
+    XS = 1:size(M)[2] .* 10
+
+    for (x, row) = zip(XS, eachrow(M))
+        vavg = mean(row)
+        push!(dfV, (x, vavg))
+    end
+
+    dfEdosw = DataFrame(:x => [], :Edosw => [])
+
+    for i = 1:size(M)[1] - 1
+        x = (XS[i] + XS[i+1])/2
+        Edosw = (dfV[i+1, :V] - dfV[i, :V])/(XS[i+1] - XS[i])
+        push!(dfEdosw, (x, Edosw))
+    end
+
+    display(dfV)
+    display(dfEdosw)
+
+    plot(
+        float.(dfV[:,:x]),
+        float.(dfV[:,:V])
+    ) |> display
+    
+    plot(
+        float.(dfEdosw[:,:x]),
+        float.(dfEdosw[:,:Edosw]),
+    ) |> display
+    
     nothing
 end
 
