@@ -24,7 +24,7 @@ function fillmissing!(M)
 end
 
 function main()
-    nplots = 5
+    nplots = 6
     iplots = 0
     numplot() = (iplots+=1; "($iplots/$nplots)")
 
@@ -75,6 +75,16 @@ function main()
         zd,
         color=:white,
         title="Linie ekwipotencjalne $(numplot())",
+    ) |> display
+
+    df(y, x) = (itp(x, y+1) - itp(x, y)), (itp(x+1, y) - itp(x, y))
+
+    quiver!(
+        [y for x=xs[begin:end-1],y=ys[begin:end-1]],
+        [x for x=xs[begin:end-1],y=ys[begin:end-1]],
+        quiver=df,
+        title="Linie pola $(numplot())",
+        color=:green,
     ) |> display
 
     dfV = DataFrame(:x => [], :V => [])
