@@ -24,7 +24,9 @@ function fillmissing!(M)
 end
 
 function main()
-    nplots = 4
+    nplots = 5
+    iplots = 0
+    numplot() = (iplots+=1; "($iplots/$nplots)")
 
     M = [
         NaN  NaN  1.04 NaN  NaN  0.86 NaN  NaN  0.75 NaN  NaN  0.94 NaN  NaN  0.95 NaN 
@@ -49,7 +51,7 @@ function main()
         xs,
         zs,
         ratio=1,
-        title="Zmierzone napięcie (1/$nplots)",
+        title="Zmierzone napięcie $(numplot())",
     ) |> display
 
     fillmissing!(zs)
@@ -64,7 +66,15 @@ function main()
         xd,
         zd,
         ratio=1,
-        title="Napięcie (interpolacja) (2/$nplots)",
+        title="Napięcie (interpolacja) $(numplot())",
+    ) |> display
+
+    contour!(
+        yd,
+        xd,
+        zd,
+        color=:white,
+        title="Linie ekwipotencjalne $(numplot())",
     ) |> display
 
     dfV = DataFrame(:x => [], :V => [])
@@ -93,7 +103,7 @@ function main()
         xlabel="x [mm]",
         ylabel="U [V]",
         legend=false,
-        title="Napięcie (3/$nplots)",
+        title="Napięcie $(numplot())",
     ) |> display
     
     plot(
@@ -102,7 +112,7 @@ function main()
         xlabel="x [mm]",
         ylabel="E [?]",
         legend=false,
-        title="Natężenie pola (4/$nplots)",
+        title="Natężenie pola $(numplot())",
     ) |> display
     
     nothing
