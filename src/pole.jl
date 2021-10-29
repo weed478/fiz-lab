@@ -1,6 +1,6 @@
 module pole
 
-using PlotlyJS
+using Plots
 using Statistics
 using Interpolations
 using DataFrames
@@ -24,6 +24,8 @@ function fillmissing!(M)
 end
 
 function main()
+    nplots = 4
+
     M = [
         NaN  NaN  1.04 NaN  NaN  0.86 NaN  NaN  0.75 NaN  NaN  0.94 NaN  NaN  0.95 NaN 
         NaN  NaN  1.79 NaN  NaN  1.71 NaN  NaN  1.69 NaN  NaN  1.72 NaN  NaN  1.74 NaN
@@ -38,11 +40,19 @@ function main()
         NaN  NaN  8.11 NaN  NaN  8.62 NaN  NaN  8.90 NaN  NaN  8.93 NaN  NaN  8.65 NaN
     ]
 
-    fillmissing!(M)
-
     xs = 1:size(M)[1]
     ys = 1:size(M)[2]
     zs = M
+
+    heatmap(
+        ys,
+        xs,
+        zs,
+        ratio=1,
+        title="Zmierzone napięcie (1/$nplots)",
+    ) |> display
+
+    fillmissing!(zs)
 
     itp = LinearInterpolation((xs, ys), zs)
     xd = range(minimum(xs), maximum(xs), length=100)
@@ -50,14 +60,16 @@ function main()
     zd = [itp(x, y) for x=xd, y=yd]
 
     heatmap(
-        x=xd,
-        y=yd,
-        z=zd,
-    ) |> plot |> display
+        yd,
+        xd,
+        zd,
+        ratio=1,
+        title="Napięcie (interpolacja) (2/$nplots)",
+    ) |> display
 
     dfV = DataFrame(:x => [], :V => [])
 
-    XS = 1:size(M)[2] .* 10
+    XS = 1:size(M)[1] .* 10
 
     for (x, row) = zip(XS, eachrow(M))
         vavg = mean(row)
@@ -76,13 +88,21 @@ function main()
     display(dfEdosw)
 
     plot(
-        float.(dfV[:,:x]),
-        float.(dfV[:,:V])
+        dfV[:,:x],
+        dfV[:,:V],
+        xlabel="x [mm]",
+        ylabel="U [V]",
+        legend=false,
+        title="Napięcie (3/$nplots)",
     ) |> display
     
     plot(
-        float.(dfEdosw[:,:x]),
-        float.(dfEdosw[:,:Edosw]),
+        dfEdosw[:,:x],
+        dfEdosw[:,:Edosw],
+        xlabel="x [mm]",
+        ylabel="E [?]",
+        legend=false,
+        title="Natężenie pola (4/$nplots)",
     ) |> display
     
     nothing
