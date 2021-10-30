@@ -249,10 +249,85 @@ function varainner()
     nothing
 end
 
+function varb()
+    M = [
+        7.96 8.11 7.82
+        6.42 4.46 6.16
+        5.28 5.23 5.03
+        4.15 4.25 4.09
+        3.32 3.41 3.24
+        2.55 2.59 2.45
+        1.86 1.94 1.86
+        1.27 1.37 1.30
+        0.74 0.79 0.69
+    ]
+
+    M = hcat(M, M[:,1])
+
+    xs = 1:size(M)[1]
+    ys = 1:size(M)[2]
+    zs = M
+
+    itp = LinearInterpolation((xs, ys), zs)
+
+    M = fill(NaN, 199, 199)
+    cx, cy = 100, 100
+    for x=1:199, y=1:199
+        r = sqrt((x-cx)^2 + (y-cy)^2)
+        if 35 <= r <= 83
+            phi = atan(y, x)
+            while phi < 0
+                phi += 2pi
+            end
+            M[end-y+1, x] = itp(1 + (r - 35)/(83-35), 1 + phi/2pi * 3)
+        end
+    end
+
+    heatmap(
+        1:199,
+        1:199,
+        vflip(M),
+        ratio=1,
+    )
+
+    savefig("output/var-B-interp.png")
+
+    contour!(
+        1:199,
+        1:199,
+        vflip(M),
+        color=:white,
+    )
+
+    savefig("output/var-B-lines.png")
+
+    dfx(x, y) = M[size(M)[1] - y + 1, x + 1] - M[size(M)[1] - y + 1, x]
+
+    dfy(x, y) = M[size(M)[1] - y, x] - M[size(M)[1] - y + 1, x]
+
+    quiver(
+        reshape([round(Int, r*cos(phi) + 100) for r=36:10:83, phi=0:0.2:2pi], :),
+        reshape([round(Int, r*sin(phi) + 100) for r=36:10:83, phi=0:0.2:2pi], :),
+        quiver=(
+            reshape([dfx(round(Int, r*cos(phi)) + 100, round(Int, r*sin(phi)) + 100) for r=36:10:83, phi=0:0.2:2pi], :),
+            reshape([dfy(round(Int, r*cos(phi)) + 100, round(Int, r*sin(phi)) + 100) for r=36:10:83, phi=0:0.2:2pi], :)
+        ),
+        ratio=1,
+    )
+
+    savefig("output/var-B-vectors.png")
+
+end
+
 function main()
     println("Variant A")
     varainner()
     varaouter()
+
+    println("Variant B")
+    varb()
+
+    nothing
 end
 
 end
