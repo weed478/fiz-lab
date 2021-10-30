@@ -4,6 +4,8 @@ using Plots
 using Statistics
 using Interpolations
 using DataFrames
+using CSV
+using Unitful
 
 function fillmissing!(M)
     for xi=1:size(M)[1]
@@ -23,11 +25,89 @@ function fillmissing!(M)
     end
 end
 
-function main()
-    nplots = 6
-    iplots = 0
-    numplot() = (iplots+=1; "($iplots/$nplots)")
+function vflip(M)
+    M′ = similar(M)
+    for (i, row) in enumerate(eachrow(M))
+        M′[end-i+1,:] = row
+    end
+    M′
+end
 
+function varaouter()
+    M = [
+        0.84 0.73 0.60
+        0.95 0.82 0.64
+        1.14 0.96 0.71
+        1.39 1.21 0.92
+        1.73 1.59 1.40
+        2.09 1.96 1.85
+        2.61 2.45 2.35
+        3.09 2.96 2.91
+        3.56 3.58 3.39
+        4.15 4.11 4.06
+        4.63 4.64 4.66
+        5.14 5.22 5.23
+        5.70 5.78 5.81
+        6.19 6.25 6.35
+        6.64 6.79 6.89
+        7.09 7.23 7.41
+        7.50 7.65 7.85
+        7.86 7.99 8.20
+        8.10 8.24 8.46
+        8.31 8.44 8.69
+        8.46 8.60 8.72
+    ]
+
+    xs = 1:size(M)[1]
+    ys = 1:size(M)[2]
+    zs = M
+
+    itp = LinearInterpolation((xs, ys), zs)
+    xd = range(minimum(xs), maximum(xs), length=100)
+    yd = range(minimum(ys), maximum(ys), length=100)
+    zd = [itp(x, y) for x=xd, y=yd]
+
+    heatmap(
+        yd,
+        xd,
+        vflip(zd),
+        ratio=1,
+    )
+
+    contour!(
+        yd,
+        xd,
+        vflip(zd),
+        color=:white,
+    )
+
+    savefig("output/var-A-outer-field.png")
+
+    df(x, y) = (
+        itp(size(M)[1] - y + 1, x + 1) - itp(size(M)[1] - y + 1, x),
+        itp(size(M)[1] - y, x) - itp(size(M)[1] - y + 1, x)
+    )
+
+    quiver(
+        reshape([y for x=xs[begin:end-1],y=ys[begin:end-1]], :),
+        reshape([x for x=xs[begin:end-1],y=ys[begin:end-1]], :),
+        quiver=df,
+        ratio=1,
+    )
+
+    savefig("output/var-A-outer-vectors.png")
+
+    Ex1 = (M[2,2] - M[2,1])/ustrip(u"m", 10u"mm")
+    Ey1 = (M[1,1] - M[2,1])/ustrip(u"m", 10u"mm")
+
+    Ex2 = (M[end,2] - M[end,1])/ustrip(u"m", 10u"mm")
+    Ey2 = (M[end-1,1] - M[end,1])/ustrip(u"m", 10u"mm")
+
+    println("E(1,2) = ($Ex1, $Ey1)")
+    println("E(1,$(size(M)[1])) = ($Ex2, $Ey2)")
+end
+
+function varainner()
     M = [
         NaN  NaN  1.04 NaN  NaN  0.86 NaN  NaN  0.75 NaN  NaN  0.94 NaN  NaN  0.95 NaN 
         NaN  NaN  1.79 NaN  NaN  1.71 NaN  NaN  1.69 NaN  NaN  1.72 NaN  NaN  1.74 NaN
@@ -49,10 +129,11 @@ function main()
     heatmap(
         ys,
         xs,
-        zs,
+        vflip(zs),
         ratio=1,
-        title="Zmierzone napięcie $(numplot())",
-    ) |> display
+    )
+
+    savefig("output/var-A-raw-data.png")
 
     fillmissing!(zs)
 
@@ -64,68 +145,114 @@ function main()
     heatmap(
         yd,
         xd,
-        zd,
+        vflip(zd),
         ratio=1,
-        title="Napięcie (interpolacja) $(numplot())",
-    ) |> display
+    )
+
+    savefig("output/var-A-interp.png")
 
     contour!(
         yd,
         xd,
-        zd,
+        vflip(zd),
         color=:white,
-        title="Linie ekwipotencjalne $(numplot())",
-    ) |> display
+    )
 
-    df(y, x) = (itp(x, y+1) - itp(x, y)), (itp(x+1, y) - itp(x, y))
+    savefig("output/var-A-lines.png")
 
-    quiver!(
-        [y for x=xs[begin:end-1],y=ys[begin:end-1]],
-        [x for x=xs[begin:end-1],y=ys[begin:end-1]],
+    df(x, y) = (
+        itp(size(M)[1] - y + 1, x + 1) - itp(size(M)[1] - y + 1, x),
+        itp(size(M)[1] - y, x) - itp(size(M)[1] - y + 1, x)
+    )
+
+    quiver(
+        reshape([y for x=xs[begin:end-1],y=ys[begin:end-1]], :),
+        reshape([x for x=xs[begin:end-1],y=ys[begin:end-1]], :),
         quiver=df,
-        title="Linie pola $(numplot())",
-        color=:green,
-    ) |> display
+        ratio=1,
+    )
 
-    dfV = DataFrame(:x => [], :V => [])
+    savefig("output/var-A-vectors.png")
 
-    XS = 1:size(M)[1] .* 10
+    dfV = DataFrame(:x=>[], :Vdosw=>[], :Vteor=>[])
+
+    M = (M)u"V"
+    XS = range(10u"mm", step=10u"mm", length=size(M)[1])
+    d = 120u"mm"
+    U = 10u"V"
 
     for (x, row) = zip(XS, eachrow(M))
         vavg = mean(row)
-        push!(dfV, (x, vavg))
+        push!(dfV, (x, vavg, x/d * U))
     end
 
-    dfEdosw = DataFrame(:x => [], :Edosw => [])
+    dfE = DataFrame(:x=>[], :Edosw=>[], :Eteor=>[])
 
     for i = 1:size(M)[1] - 1
         x = (XS[i] + XS[i+1])/2
-        Edosw = (dfV[i+1, :V] - dfV[i, :V])/(XS[i+1] - XS[i])
-        push!(dfEdosw, (x, Edosw))
+        Edosw = (dfV[i+1, :Vdosw] - dfV[i, :Vdosw])/(XS[i+1] - XS[i])
+        Edosw = uconvert(u"V/m", Edosw)
+        Eteor = uconvert(u"V/m", U/d)
+        push!(dfE, (x, Edosw, Eteor))
     end
 
-    display(dfV)
-    display(dfEdosw)
+    CSV.write("output/var-A-dfV.csv", 
+        select(dfV,
+            :x => (x -> ustrip.(u"mm", x)) => :x,
+            :Vdosw => (x -> ustrip.(u"V", x)) => :Vdosw,
+            :Vteor => (x -> ustrip.(u"V", x)) => :Vteor,
+        )
+    )
 
-    plot(
-        dfV[:,:x],
-        dfV[:,:V],
+    CSV.write("output/var-A-dfE.csv", 
+        select(dfE,
+            :x => (x -> ustrip.(u"mm", x)) => :x,
+            :Edosw => (x -> ustrip.(u"V/m", x)) => :Edosw,
+            :Eteor => (x -> ustrip.(u"V/m", x)) => :Eteor,
+        )
+    )
+
+    println("dfV")
+    display(dfV)
+    println("dfE")
+    display(dfE)
+
+    scatter(
+        ustrip.(u"mm", dfV[:,:x]),
+        ustrip.(u"V", dfV[:,:Vdosw]),
         xlabel="x [mm]",
-        ylabel="U [V]",
+        ylabel="V [V]",
         legend=false,
-        title="Napięcie $(numplot())",
-    ) |> display
+    )
+    plot!(
+        ustrip.(u"mm", dfV[:,:x]),
+        ustrip.(u"V", dfV[:,:Vteor]),
+    )
+
+    savefig("output/var-A-V-vs-x.png")
     
-    plot(
-        dfEdosw[:,:x],
-        dfEdosw[:,:Edosw],
+    scatter(
+        ustrip.(u"mm", dfE[:,:x]),
+        ustrip.(u"V/m", dfE[:,:Edosw]),
         xlabel="x [mm]",
-        ylabel="E [?]",
+        ylabel="E [V/m]",
+        ylims=(50,90),
         legend=false,
-        title="Natężenie pola $(numplot())",
-    ) |> display
+    )
+    plot!(
+        ustrip.(u"mm", dfE[:,:x]),
+        ustrip.(u"V/m", dfE[:,:Eteor]),
+    )
+
+    savefig("output/var-A-E-vs-x.png")
     
     nothing
+end
+
+function main()
+    println("Variant A")
+    varainner()
+    varaouter()
 end
 
 end
