@@ -199,17 +199,21 @@ function varainner()
     CSV.write("output/var-A-dfV.csv", 
         select(dfV,
             :x => (x -> ustrip.(u"mm", x)) => :x,
-            :Vdosw => (x -> ustrip.(u"V", x)) => :Vdosw,
-            :Vteor => (x -> ustrip.(u"V", x)) => :Vteor,
-        )
+            :Vdosw => (x -> round.(ustrip.(u"V", x), digits=2)) => :Vdosw,
+            :Vteor => (x -> round.(ustrip.(u"V", x), digits=2)) => :Vteor,
+        ),
+        delim=" & ",
+        newline=" \\\\\n",
     )
 
     CSV.write("output/var-A-dfE.csv", 
         select(dfE,
             :x => (x -> ustrip.(u"mm", x)) => :x,
-            :Edosw => (x -> ustrip.(u"V/m", x)) => :Edosw,
-            :Eteor => (x -> ustrip.(u"V/m", x)) => :Eteor,
-        )
+            :Edosw => (x -> round.(ustrip.(u"V/m", x), digits=2)) => :Edosw,
+            :Eteor => (x -> round.(ustrip.(u"V/m", x), digits=2)) => :Eteor,
+        ),
+        delim=" & ",
+        newline=" \\\\\n",
     )
 
     println("dfV")
@@ -348,17 +352,21 @@ function varb()
     CSV.write("output/var-B-dfV.csv", 
         select(dfV,
             :x => (x -> ustrip.(u"mm", x)) => :x,
-            :Vdosw => (x -> ustrip.(u"V", x)) => :Vdosw,
-            :Vteor => (x -> ustrip.(u"V", x)) => :Vteor,
-        )
+            :Vdosw => (x -> round.(ustrip.(u"V", x), digits=2)) => :Vdosw,
+            :Vteor => (x -> round.(ustrip.(u"V", x), digits=2)) => :Vteor,
+        ),
+        delim=" & ",
+        newline=" \\\\\n",
     )
 
     CSV.write("output/var-B-dfE.csv", 
         select(dfE,
             :x => (x -> ustrip.(u"mm", x)) => :x,
-            :Edosw => (x -> ustrip.(u"V/m", x)) => :Edosw,
-            :Eteor => (x -> ustrip.(u"V/m", x)) => :Eteor,
-        )
+            :Edosw => (x -> round.(ustrip.(u"V/m", x), digits=2)) => :Edosw,
+            :Eteor => (x -> round.(ustrip.(u"V/m", x), digits=2)) => :Eteor,
+        ),
+        delim=" & ",
+        newline=" \\\\\n",
     )
 
     println("dfV")
