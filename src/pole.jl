@@ -250,7 +250,7 @@ function varainner()
 end
 
 function varb()
-    M = [
+    measurements = [
         7.96 8.11 7.82
         6.42 4.46 6.16
         5.28 5.23 5.03
@@ -261,6 +261,8 @@ function varb()
         1.27 1.37 1.30
         0.74 0.79 0.69
     ]
+
+    M = measurements
 
     M = hcat(M, M[:,1])
 
@@ -317,6 +319,82 @@ function varb()
 
     savefig("output/var-B-vectors.png")
 
+    dfV = DataFrame(:x=>[], :Vdosw=>[], :Vteor=>[])
+
+    M = (measurements[:,1:3])u"V"
+    XS = range(30u"mm", step=10u"mm", length=size(M)[1])
+    rw = XS[1] - 10u"mm"
+    rz = XS[end] + 10u"mm"
+    U = 10u"V"
+
+    for (x, row) = zip(XS, eachrow(M))
+        r = x
+        Vdosw = mean(row)
+        Vteor = log(r/rz) * U / log(rz/rw)
+        push!(dfV, (x, Vdosw, -Vteor))
+    end
+
+    dfE = DataFrame(:x=>[], :Edosw=>[], :Eteor=>[])
+
+    for i = 2:size(M)[1]
+        x = (XS[i] + XS[i-1])/2
+        r = x
+        Edosw = (dfV[i-1, :Vdosw] - dfV[i, :Vdosw])/(XS[i-1] - XS[i])
+        Edosw = uconvert(u"V/m", Edosw)
+        Eteor = uconvert(u"V/m", -U/(r*log(rz/rw)))
+        push!(dfE, (x, -Edosw, -Eteor))
+    end
+
+    CSV.write("output/var-B-dfV.csv", 
+        select(dfV,
+            :x => (x -> ustrip.(u"mm", x)) => :x,
+            :Vdosw => (x -> ustrip.(u"V", x)) => :Vdosw,
+            :Vteor => (x -> ustrip.(u"V", x)) => :Vteor,
+        )
+    )
+
+    CSV.write("output/var-B-dfE.csv", 
+        select(dfE,
+            :x => (x -> ustrip.(u"mm", x)) => :x,
+            :Edosw => (x -> ustrip.(u"V/m", x)) => :Edosw,
+            :Eteor => (x -> ustrip.(u"V/m", x)) => :Eteor,
+        )
+    )
+
+    println("dfV")
+    display(dfV)
+    println("dfE")
+    display(dfE)
+
+    scatter(
+        ustrip.(u"mm", dfV[:,:x]),
+        ustrip.(u"V", dfV[:,:Vdosw]),
+        xlabel="x [mm]",
+        ylabel="V [V]",
+        legend=false,
+    )
+    plot!(
+        ustrip.(u"mm", dfV[:,:x]),
+        ustrip.(u"V", dfV[:,:Vteor]),
+    )
+
+    savefig("output/var-B-V-vs-x.png")
+    
+    scatter(
+        ustrip.(u"mm", dfE[:,:x]),
+        ustrip.(u"V/m", dfE[:,:Edosw]),
+        xlabel="x [mm]",
+        ylabel="E [V/m]",
+        legend=false,
+    )
+    plot!(
+        ustrip.(u"mm", dfE[:,:x]),
+        ustrip.(u"V/m", dfE[:,:Eteor]),
+    )
+
+    savefig("output/var-B-E-vs-x.png")
+
+    nothing
 end
 
 function main()
