@@ -122,6 +122,12 @@ function varainner()
         NaN  NaN  8.11 NaN  NaN  8.62 NaN  NaN  8.90 NaN  NaN  8.93 NaN  NaN  8.65 NaN
     ]
 
+    CSV.write("output/var-A-raw.csv", 
+        DataFrame(M, ["V$i" for i=1:size(M)[2]])[:,[3,6,9,12,15]],
+        delim=" & ",
+        newline=" \\\\\n",
+    )
+
     xs = 1:size(M)[1]
     ys = 1:size(M)[2]
     zs = M
@@ -267,6 +273,12 @@ function varb()
     ]
 
     M = measurements
+
+    CSV.write("output/var-B-raw.csv", 
+        DataFrame(M, ["V$i" for i=1:size(M)[2]]),
+        delim=" & ",
+        newline=" \\\\\n",
+    )
 
     M = hcat(M, M[:,1])
 
