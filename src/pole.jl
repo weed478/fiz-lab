@@ -338,9 +338,12 @@ function varb()
     dfV = DataFrame(:x=>[], :Vdosw=>[], :Vteor=>[])
 
     M = (measurements[:,1:3])u"V"
-    XS = range(30u"mm", step=10u"mm", length=size(M)[1])
-    rw = XS[1] - 10u"mm"
-    rz = XS[end] + 10u"mm"
+    # XS = range(30u"mm", step=10u"mm", length=size(M)[1])
+    # rw = XS[1] - 10u"mm"
+    # rz = XS[end] + 10u"mm"
+    rw = 15u"mm"
+    XS = range(rw + 4u"mm", step=8u"mm", length=size(M)[1])
+    rz = XS[end] + 6u"mm"
     U = 10u"V"
 
     for (x, row) = zip(XS, eachrow(M))
