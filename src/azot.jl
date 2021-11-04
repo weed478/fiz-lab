@@ -6,6 +6,7 @@ using CSV
 using Unitful
 using Measurements
 using Polynomials
+using GLM
 
 function main()
     atmpress = 980u"hPa"
@@ -115,32 +116,37 @@ function main()
     )
     savefig("output/T-vs-p-combined.png")
 
-    f = fit(
-        ustrip.(u"Pa", Measurements.value.(Mpresscombined)),
-        ustrip.(u"K", Mtempcombined),
-        5,
+    x0 = ustrip(u"bar", atmpress)
+
+    df = DataFrame(
+        :X => ustrip.(u"bar", Measurements.value.(Mpresscombined)) .- x0,
+        :Y => ustrip.(u"K", Mtempcombined),
     )
+    olm = lm(@formula(Y ~ X + X^2 + X^3 + X^4 + X^5), df)
+    poly = Polynomial(coef(olm))
+    f(x) = poly(x - x0)
 
     plot!(
         ustrip.(u"hPa", Measurements.value.(Mpresscombined)),
-        f.(ustrip.(u"Pa", Measurements.value.(Mpresscombined))),
+        f.(ustrip.(u"bar", Measurements.value.(Mpresscombined))),
     )
 
-    df = derivative(f)
-    x0 = ustrip(u"Pa", atmpress)
-    a = df(x0)
-    b = f(x0) - a*x0
+    a = poly[1]
+    b = poly[0] - a*x0
     line(x) = a*x + b
 
     xs = [-0.1x0, 1.9x0]
     ys = line.(xs)
 
     plot!(
-        ustrip.(u"hPa", (xs)u"Pa"),
+        ustrip.(u"hPa", (xs)u"bar"),
         ys,
     )
     
     savefig("output/T-vs-p-combined-polynomial.png")
+
+    a = (a)u"K/bar" ± stderr(olm)[2]u"K/bar"
+    println("a₁ = $a")
 
     nothing
 end
