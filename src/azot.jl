@@ -11,7 +11,7 @@ using GLM
 function main()
     atmpress = 980u"hPa"
 
-    Mpress = atmpress .+ [
+    Mpress = @. atmpress + [
         0.0 
         0.1
         0.2
@@ -23,7 +23,7 @@ function main()
         0.8
         0.9
         1.0
-    ]u"bar" .± 0.05u"bar"
+    ]u"bar" ± 0.05u"bar"
 
     Mtempup = [
         76.7 # 20.0
@@ -53,9 +53,9 @@ function main()
         83.8 # 23.0
     ]u"K"
 
-    Mtemp = (Mtempup .+ Mtempdown) ./ 2
+    Mtemp = @. (Mtempup + Mtempdown) / 2
 
-    Mpressvac = atmpress .+ [
+    Mpressvac = @. atmpress + [
          0.0
         -0.1
         -0.2
@@ -67,7 +67,7 @@ function main()
         -0.8
         -0.9
         -1.0
-    ]u"bar" .± 0.05u"bar"
+    ]u"bar" ± 0.05u"bar"
 
     Mtempvac = [
         77.2 # 20.2
@@ -86,18 +86,18 @@ function main()
     Tice = 63.6u"K" # 14.5
 
     scatter(
-        ustrip.(u"hPa", Mpress),
+        ustrip.(u"bar", Mpress),
         ustrip.(u"K", Mtemp),
-        xlabel="p [hPa]",
+        xlabel="p [bar]",
         ylabel="T [K]",
         legend=false,
     )
     savefig("output/T-vs-p-high-press.png")
 
     scatter(
-        ustrip.(u"hPa", Mpressvac),
+        ustrip.(u"bar", Mpressvac),
         ustrip.(u"K", Mtempvac),
-        xlabel="p [hPa]",
+        xlabel="p [bar]",
         ylabel="T [K]",
         legend=false,
     )
@@ -108,9 +108,9 @@ function main()
     Mtempcombined = [reverse(Mtempvac[2:end]); (Mtemp[1]+Mtempvac[1])/2; Mtemp[2:end]]
 
     scatter(
-        ustrip.(u"hPa", Mpresscombined),
+        ustrip.(u"bar", Mpresscombined),
         ustrip.(u"K", Mtempcombined),
-        xlabel="p [hPa]",
+        xlabel="p [bar]",
         ylabel="T [K]",
         legend=false,
     )
@@ -127,7 +127,7 @@ function main()
     f(x) = poly(x - x0)
 
     plot!(
-        ustrip.(u"hPa", Measurements.value.(Mpresscombined)),
+        ustrip.(u"bar", Measurements.value.(Mpresscombined)),
         f.(ustrip.(u"bar", Measurements.value.(Mpresscombined))),
     )
 
@@ -139,7 +139,7 @@ function main()
     ys = line.(xs)
 
     plot!(
-        ustrip.(u"hPa", (xs)u"bar"),
+        ustrip.(u"bar", (xs)u"bar"),
         ys,
     )
     
