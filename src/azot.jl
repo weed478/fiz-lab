@@ -8,6 +8,44 @@ using Measurements
 using Polynomials
 using GLM
 
+function makecsv(atmpress, p, tup, tdown, t, pvac, tvac)
+    p = @. Measurements.value(p)
+    p = @. round(ustrip(u"bar", p - atmpress), digits=2)
+
+    pvac = @. Measurements.value(pvac)
+    pvac = @. round(ustrip(u"bar", pvac - atmpress), digits=2)
+
+    atmpress = ustrip(u"bar", atmpress)
+    
+    tup = @. round(ustrip(u"K", tup), digits=2)
+    tdown = @. round(ustrip(u"K", tdown), digits=2)
+    t = @. round(ustrip(u"K", t), digits=2)
+    tvac = @. round(ustrip(u"K", tvac), digits=2)
+
+    CSV.write(
+        "output/wyniki-pos.csv",
+        DataFrame(
+            "\$\\Delta\$p [bar]" => p,
+            "p [bar]" => round.(p .+ atmpress, digits=2),
+            "T\\,\$\\uparrow\$ [K]" => tup,
+            "T\\,\$\\downarrow\$ [K]" => tdown,
+            "T [K]" => t,
+        ),
+        delim=" & ",
+        newline=" \\\\\n",
+    )
+    CSV.write(
+        "output/wyniki-vac.csv",
+        DataFrame(
+            "\$\\Delta\$p [bar]" => pvac,
+            "p [bar]" => round.(pvac .+ atmpress, digits=2),
+            "T [K]" => tvac,
+        ),
+        delim=" & ",
+        newline=" \\\\\n",
+    )
+end
+
 function main()
     atmpress = 980u"hPa"
 
@@ -84,6 +122,16 @@ function main()
     ]u"K"
 
     Tice = 63.6u"K" # 14.5
+
+    makecsv(
+        atmpress,
+        Mpress,
+        Mtempup,
+        Mtempdown,
+        Mtemp,
+        Mpressvac,
+        Mtempvac,
+    )
 
     scatter(
         ustrip.(u"bar", Mpress),
