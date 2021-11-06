@@ -7,6 +7,25 @@ using Unitful
 using Measurements
 using Polynomials
 using GLM
+import PhysicalConstants.CODATA2018: R
+
+function calcQp(dTdp)
+    p = 1u"atm"
+    T = 77.3u"K"
+
+    ρ = 0.808u"g/cm^3"
+    m = 1u"kg"
+    V₁ = m/ρ
+
+    M = 28u"g"
+    n = (m/M)u"mol"
+    V₂ = n*R*T/p
+
+    Q = T*(V₂ - V₁)/dTdp
+
+    Qₚ = uconvert(u"J/g", Q/m)
+    @show Qₚ
+end
 
 function makecsv(atmpress, p, tup, tdown, t, pvac, tvac)
     p = @. Measurements.value(p)
@@ -164,7 +183,7 @@ function main()
     )
     savefig("output/T-vs-p-combined.png")
 
-    x0 = ustrip(u"bar", atmpress)
+    x0 = ustrip(u"bar", 1u"atm")
 
     df = DataFrame(
         :X => ustrip.(u"bar", Measurements.value.(Mpresscombined)) .- x0,
@@ -195,6 +214,8 @@ function main()
 
     a = (a)u"K/bar" ± stderr(olm)[2]u"K/bar"
     println("a₁ = $a")
+
+    calcQp(a)
 
     nothing
 end
