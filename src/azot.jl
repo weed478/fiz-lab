@@ -36,9 +36,16 @@ function makecsv(atmpress, p, tup, tdown, t, pvac, tvac)
 
     atmpress = ustrip(u"bar", atmpress)
     
+    tup = @. Measurements.value(tup)
     tup = @. round(ustrip(u"K", tup), digits=2)
+
+    tdown = @. Measurements.value(tdown)
     tdown = @. round(ustrip(u"K", tdown), digits=2)
+
+    t = @. Measurements.value(t)
     t = @. round(ustrip(u"K", t), digits=2)
+
+    tvac = @. Measurements.value(tvac)
     tvac = @. round(ustrip(u"K", tvac), digits=2)
 
     CSV.write(
@@ -82,7 +89,7 @@ function main()
         1.0
     ]u"bar" ± 0.05u"bar"
 
-    Mtempup = [
+    Mtempup = @. [
         76.7 # 20.0
         78.4 # 20.7
         79.1 # 21.0
@@ -94,9 +101,9 @@ function main()
         82.6 # 22.5
         83.1 # 22.7
         83.8 # 23.0
-    ]u"K"
+    ]u"K" ± 0.3u"K"
 
-    Mtempdown = [
+    Mtempdown = @. [
         77.2 # 20.2
         78.1 # 20.6
         78.8 # 20.9
@@ -108,7 +115,7 @@ function main()
         82.8 # 22.6
         83.3 # 22.8
         83.8 # 23.0
-    ]u"K"
+    ]u"K" ± 0.3u"K"
 
     Mtemp = @. (Mtempup + Mtempdown) / 2
 
@@ -126,7 +133,7 @@ function main()
         -1.0
     ]u"bar" ± 0.05u"bar"
 
-    Mtempvac = [
+    Mtempvac = @. [
         77.2 # 20.2
         76.5 # 19.9
         75.5 # 19.5
@@ -138,9 +145,7 @@ function main()
         66.2 # 15.6
         64.3 # 14.8
         58.1 # 12.3
-    ]u"K"
-
-    Tice = 63.6u"K" # 14.5
+    ]u"K" ± 0.3u"K"
 
     makecsv(
         atmpress,
@@ -187,7 +192,7 @@ function main()
 
     df = DataFrame(
         :X => ustrip.(u"bar", Measurements.value.(Mpresscombined)) .- x0,
-        :Y => ustrip.(u"K", Mtempcombined),
+        :Y => ustrip.(u"K", Measurements.value.(Mtempcombined)),
     )
     olm = lm(@formula(Y ~ X + X^2 + X^3 + X^4 + X^5), df)
     poly = Polynomial(coef(olm))
