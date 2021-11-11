@@ -8,9 +8,9 @@ function main()
     μ = 63.58u"g"
     w = 2
     t = 30u"minute" ± 5u"s"
-    I = 0.5u"A" ± 3u"mA"
-    m₁ = 110.246u"g" ± 0.1u"g"
-    m₂ = 110.532u"g" ± 0.1u"g"
+    I = 0.5u"A" ± 5u"mA"
+    m₁ = 110.246u"g" ± 0.01u"g"
+    m₂ = 110.532u"g" ± 0.01u"g"
 
     m = m₂ - m₁
     @show m
