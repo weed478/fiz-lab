@@ -32,6 +32,7 @@ end
 function getyoung(exp)
     f = exp.f
     ρ = exp.m / (exp.area * exp.l)
+    println("ρ = $(uconvert(u"g/cm^3", ρ))")
 
     λ = 2exp.l ./ (1:length(f))
     v = λ .* f
@@ -39,7 +40,7 @@ function getyoung(exp)
     E = ρ * mean(v)^2
     E = uconvert(u"GPa", E)
 
-    println("E($(exp.material)) = $E")
+    println("E($(exp.material)) = $E\n")
 
     gentables(exp.material, f, λ, v)
 
