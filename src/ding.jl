@@ -3,6 +3,8 @@ module ding
 using Statistics: mean
 using Measurements
 using Unitful
+using DataFrames
+import CSV
 import Unitful: mm, cm, g, Hz
 
 struct Experiment
@@ -16,6 +18,17 @@ end
 circle(d) = pi * (d/2)^2
 square(a) = a^2
 
+function gentables(material, f, λ, v)
+    f = @. round(Int, ustrip(u"Hz", Measurements.value(f)))
+    λ = @. round(ustrip(u"m", Measurements.value(λ)), digits=2)
+    v = @. round(Int, ustrip(u"m/s", Measurements.value(v)))
+    df = DataFrame(:k=>1:length(f), :f=>f, :λ=>λ, :v=>v)
+    CSV.write("output/ding-$material.txt", df,
+        newline=" \\\\\n\\midrule\n",
+        delim=" & ",
+    )
+end
+
 function getyoung(exp)
     f = exp.f
     ρ = exp.m / (exp.area * exp.l)
@@ -27,6 +40,10 @@ function getyoung(exp)
     E = uconvert(u"GPa", E)
 
     println("E($(exp.material)) = $E")
+
+    gentables(exp.material, f, λ, v)
+
+    nothing
 end
 
 function main()
