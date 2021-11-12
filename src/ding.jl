@@ -1,6 +1,7 @@
 module ding
 
 using Statistics: mean
+using Measurements
 using Unitful
 import Unitful: mm, cm, g, Hz
 
@@ -29,12 +30,17 @@ function getyoung(exp)
 end
 
 function main()
+    ud = 0.05mm
+    ul = 2mm
+    um = 1g
+    uf = 6Hz
+
     exps = [
         Experiment(
             "copper",
-            circle(12.05mm),
-            202cm,
-            2038g,
+            circle(12.05mm ± ud),
+            202cm ± ul,
+            2038g ± um,
             [
                 943
                 1893
@@ -42,37 +48,37 @@ function main()
                 3779
                 4723
                 5672
-            ]Hz,
+            ]Hz .± uf,
         ),
         Experiment(
             "alu",
-            square(10.00mm),
-            100cm,
-            273g,
+            square(10.00mm ± ud),
+            100cm ± ul,
+            273g ± um,
             [
                 2484
                 4963
                 7441
                 9926
-            ]Hz,
+            ]Hz .± uf,
         ),
         Experiment(
             "steel",
-            circle(10.25mm),
-            198cm,
-            1139g,
+            circle(10.25mm ± ud),
+            198cm ± ul,
+            1139g ± um,
             [
                 1441
                 2883
                 4318
                 5766
-            ]Hz,
+            ]Hz .± uf,
         ),
         Experiment(
             "brass",
-            circle(12.00mm),
-            196cm,
-            1869g,
+            circle(12.00mm ± ud),
+            196cm ± ul,
+            1869g ± um,
             [
                 896
                 1793
@@ -80,7 +86,7 @@ function main()
                 3586
                 4482
                 5379
-            ]Hz,
+            ]Hz .± uf,
         ),
     ]
 
