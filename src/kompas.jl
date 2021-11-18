@@ -1,5 +1,6 @@
 module kompas
 
+using Plots
 using Statistics: mean
 using Measurements
 using Measurements: value
@@ -10,6 +11,44 @@ import Unitful: mm, mA, °, μT
 import PhysicalConstants.CODATA2018: μ_0 as μ₀
 
 B₀(R, N, I, α) = uconvert(μT, μ₀ * (N * I) / (2 * R * tan(α)))
+
+function plotstuff(df)
+    N = unique(df.N)
+    dfs = map(N) do n
+        filter(df) do row
+            row.N == n
+        end
+    end
+
+    plot(
+        xlabel="I [mA]",
+        ylabel="α [°]",
+        ylims=(-Inf, 100),
+    )
+    for df in dfs |> reverse
+        plot!(
+            ustrip.(mA, df.I .|> value),
+            ustrip.(°, df.α .|> value),
+            label="N=$(df.N[1])",
+        )
+    end
+    savefig("output/I-vs-alpha")
+
+    plot(
+        xlabel="I [mA]",
+        ylabel="B₀ [μT]",
+        ylims=(0, 35),
+    )
+    for df in dfs
+        scatter!(
+            ustrip.(mA, df.I .|> value),
+            ustrip.(μT, df.B₀ .|> value),
+            label="N=$(df.N[1])",
+        )
+    end
+    savefig("output/I-vs-B_0")
+    nothing
+end
 
 function main()
     d = 260mm ± 3mm
@@ -61,6 +100,8 @@ function main()
     transform!(df, [:N, :I, :α] => ((N, I, α) -> B₀.(R, N, I, α)) => :B₀)
 
     display(df)
+
+    plotstuff(df)
 
     println("B₀ = $(mean(df.B₀))")
 
