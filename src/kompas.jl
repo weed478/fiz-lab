@@ -1,7 +1,7 @@
 module kompas
 
 using Plots
-using Statistics: mean
+using Statistics: mean, std
 using Measurements
 using Measurements: value
 using Unitful
@@ -51,7 +51,13 @@ function plotstuff(df)
 end
 
 function main()
-    d = 260mm ± 3mm
+    uB_R = 1.5mm
+
+    Irange = 750mA
+    ΔI = 0.5 * Irange / 100
+    uB_I = ΔI / √3
+
+    d = 260mm
     R = d / 2
 
     df = DataFrame(
@@ -89,12 +95,6 @@ function main()
         [:N, :I, :left, :right]
     )
 
-    transform!(df,
-        [:I] => (I -> I .± 3mA) => :I,
-        [:left] => (a -> a .± 2°) => :left,
-        [:right] => (a -> a .± 2°) => :right,
-    )
-
     transform!(df, [:left, :right] => ((a, b) -> (a .+ b) ./ 2) => :α)
 
     transform!(df, [:N, :I, :α] => ((N, I, α) -> B₀.(R, N, I, α)) => :B₀)
@@ -103,7 +103,23 @@ function main()
 
     plotstuff(df)
 
+    B0 = mean(df.B₀)
+    uA_B0 = std(df.B₀) / √(length(df.B₀))
+    uC_B0 = B0 * √( (uA_B0/B0)^2 + (uB_I/(Irange/2))^2 + (uB_R/R)^2 )
+
+    println("u_B(I) = $uB_I")
+    println("u_B(I)/I = $(uB_I/(Irange/2))")
+
+    println("u_B(R) = $uB_R")
+    println("u_B(R)/R = $(uB_R/(R))")
+    
     println("B₀ = $(mean(df.B₀))")
+    
+    println("u_A(B₀) = $uA_B0")
+    println("u_A(B₀)/B₀ = $(uA_B0/B0)")
+    
+    println("u_C(B₀) = $uC_B0")
+    println("u_C(B₀)/B₀ = $(uC_B0/B0)")
 
     CSV.write("output/kompas.csv",
         select(df,
@@ -113,7 +129,6 @@ function main()
             :right => ByRow(x -> round(Int, ustrip(°, value(x)))) => "α prawo [°]",
             :α => ByRow(x -> round(ustrip(°, value(x)), digits=2)) => "α [°]",
             :B₀ => ByRow(x -> round(ustrip(μT, value(x)), digits=1)) => "B₀ [μT]",
-            :B₀ => ByRow(x -> round(ustrip(μT, Measurements.uncertainty(x)), digits=1)) => "u(B₀) [μT]",
         ),
         newline=" \\\\\n\\midrule\n",
         delim=" & ",
